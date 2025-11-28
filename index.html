@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <title>Sistema de Pontos</title>
+    </head>
+    <body class="bg-gray-900 text-white p-6">
+
+        <h1 class="text-2xl font-bold mb-4">Sistema de Pontuação</h1>
+
+        <p class="mb-3 text-gray-300">Valores editáveis e salvos automaticamente
+            no localStorage.</p>
+
+        <button onclick="calcular()"
+            class="bg-blue-600 px-4 py-2 rounded mb-6 hover:bg-blue-500">
+            Recalcular
+        </button>
+
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-700">
+                    <th class="p-2">Participante</th>
+                    <th class="p-2">Pontuação Base</th>
+                    <th class="p-2">Ganhas</th>
+                    <th class="p-2">Sprint Seguidas</th>
+                    <th class="p-2">Perc. Ganhas</th>
+                    <th class="p-2">Perc. Sprints</th>
+                    <th class="p-2">Resultado Final</th>
+                </tr>
+            </thead>
+            <tbody id="tbody" class="divide-y divide-gray-700"></tbody>
+        </table>
+
+        <div id="campeao" class="mt-6 text-xl font-bold text-green-400"></div>
+
+        <script>
+const percentuais = {
+    0: 1,
+    1: 1,
+    2: 0.96,
+    3: 0.91,
+    4: 0.86,
+    5: 0.81,
+    6: 0.76,
+};
+
+let participantesPadrao = [
+  { nome: "Guilhermer", pontos: 30, ganhas: 1, sprints: 0 },
+  { nome: "Herbert", pontos: 28, ganhas: 2, sprints: 0 },
+  { nome: "Heberte", pontos: 16, ganhas: 3, sprints: 1 },
+  { nome: "Reinam", pontos: 35, ganhas: 5, sprints: 0 },
+  { nome: "Bike", pontos: 12, ganhas: 0, sprints: 0 },
+  { nome: "Cley", pontos: 20, ganhas: 0, sprints: 0 },
+  { nome: "Koto", pontos: 23, ganhas: 0, sprints: 0 },
+  { nome: "Koto 2", pontos: 27, ganhas: 2, sprints: 0 },
+];
+
+// carrega do storage se existir
+let participantes = JSON.parse(localStorage.getItem("participantes_pontos")) ?? participantesPadrao;
+
+function salvar() {
+    localStorage.setItem("participantes_pontos", JSON.stringify(participantes));
+}
+
+function calcular() {
+    const tbody = document.getElementById("tbody");
+    const divCampeao = document.getElementById("campeao");
+    tbody.innerHTML = "";
+
+    participantes.forEach((p, i) => {
+        
+        const pt = Number(document.getElementById(`pontos_${i}`)?.value ?? p.pontos);
+        const g  = Number(document.getElementById(`ganhas_${i}`)?.value ?? p.ganhas);
+        const s  = Number(document.getElementById(`sprint_${i}`)?.value ?? p.sprints);
+
+        participantes[i].pontos  = pt;
+        participantes[i].ganhas  = g;
+        participantes[i].sprints = s;
+
+        const percG = percentuais[g] ?? 1;
+        const percS = percentuais[s] ?? 1;
+
+        const final = pt * percG * percS;
+        participantes[i].final = final;
+
+        tbody.innerHTML += `
+            <tr>
+                <td class="p-2">${p.nome}</td>
+
+                <td class="p-2">
+                    <input id="pontos_${i}" type="number" value="${pt}"
+                        class="bg-gray-800 w-20 p-1 rounded text-center"
+                        oninput="atualizar(${i})">
+                </td>
+
+                <td class="p-2">
+                    <input id="ganhas_${i}" type="number" value="${g}"
+                        class="bg-gray-800 w-20 p-1 rounded text-center"
+                        oninput="atualizar(${i})">
+                </td>
+
+                <td class="p-2">
+                    <input id="sprint_${i}" type="number" value="${s}"
+                        class="bg-gray-800 w-20 p-1 rounded text-center"
+                        oninput="atualizar(${i})">
+                </td>
+
+                <td class="p-2">${percG}</td>
+                <td class="p-2">${percS}</td>
+                <td class="p-2 font-bold">${final.toFixed(2)}</td>
+            </tr>
+        `;
+    });
+
+    const campeao = participantes.reduce((a, b) => (a.final > b.final ? a : b));
+    divCampeao.innerHTML = `🏆 Campeão: 
+        <span class="text-yellow-300">${campeao.nome}</span> 
+        com 
+        <span class="text-yellow-300">${campeao.final.toFixed(2)}</span> pontos`;
+
+    salvar();
+}
+
+function atualizar(i) {
+    const pt = Number(document.getElementById(`pontos_${i}`).value);
+    const g  = Number(document.getElementById(`ganhas_${i}`).value);
+    const s  = Number(document.getElementById(`sprint_${i}`).value);
+
+    participantes[i].pontos = pt;
+    participantes[i].ganhas = g;
+    participantes[i].sprints = s;
+
+    salvar();
+}
+
+calcular();
+</script>
+
+    </body>
+</html>
